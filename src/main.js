@@ -54,7 +54,10 @@ const k = kaplay({
     width: settings.scene.width,
     height: settings.scene.height,
     background: settings.colors.background,
+    debugKey: 'd', // Temp option
 });
+
+k.debug.inspect = false; // DEBUG
 
 function loader() {
     const fileName = [
@@ -74,18 +77,22 @@ function loader() {
         k.loadSprite(`${name}`, `sprites/${name}.png`);
     }
 
-    k.loadSprite('enemy', 'sprites/enemy.png', {
-        sliceX: 6,
-        sliceY: 1,
-        anims: {
-            run: {
-                from: 0,
-                to: 5,
-                loop: true,
-                speed: 5,
+    const fileNameAnimated = ['enemy', 'player'];
+
+    for (const name of fileNameAnimated) {
+        k.loadSprite(`${name}`, `sprites/${name}.png`, {
+            sliceX: 6,
+            sliceY: 1,
+            anims: {
+                run: {
+                    from: 0,
+                    to: 5,
+                    loop: true,
+                    speed: 5,
+                },
             },
-        },
-    });
+        });
+    }
 
     k.loadFont('Silkscreen', 'fonts/Silkscreen.woff2');
 }
@@ -98,7 +105,7 @@ const stage = [
     '                         ',
     'XXXXXXXX       XXXH   XXX',
     '       X       X      XQQ',
-    '       X       X      XXX',
+    ' P     X       X      XXX',
     '       X M     X M       ',
     '       XXXXH   XXXXXXXXXX',
     'XXX                      ',
@@ -214,7 +221,18 @@ const stage = [
                 X: () => [k.sprite('box'), k.area(), k.body({ isStatic: true }), k.layer('room')],
                 H: () => [k.sprite('head'), k.area(), k.body({ isStatic: true }), k.layer('room')],
                 M: () => [k.sprite('mushroomDry'), k.area(), k.layer('room')],
-                E: () => [k.sprite('enemy', { anim: 'run' }), k.area(), k.layer('room')],
+                E: () => [
+                    k.sprite('enemy', { anim: 'run' }),
+                    k.area({ shape: new k.Rect(k.vec2(0, 13), 64, 18) }),
+                    k.layer('room'),
+                    'flinger',
+                ],
+                P: () => [
+                    k.sprite('player', { anim: 'run' }),
+                    k.area({ shape: new k.Rect(k.vec2(0, 13), 64, 18) }),
+                    k.layer('room'),
+                    'hero',
+                ],
             },
         });
         console.log(level);
