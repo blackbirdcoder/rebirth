@@ -9,6 +9,7 @@ const settings = {
     colors: {
         background: '#2A2F4E',
         panel: '#0E071B',
+        text: '#0CF1FF',
     },
     tile: {
         width: 32,
@@ -80,6 +81,8 @@ function loader() {
             },
         },
     });
+
+    k.loadFont('Silkscreen', 'fonts/Silkscreen.woff2');
 }
 
 // 25 X 19
@@ -107,7 +110,16 @@ const stage = [
 
 (function main(loader, settings) {
     loader();
-    k.scene('game', (stage, settings) => {
+
+    const dataManger = {
+        count: {
+            drops: 0,
+            mushroom: 0,
+            stage: 1,
+        },
+    };
+
+    k.scene('game', (stage, settings, dataManger) => {
         k.layers(['room', 'ui'], 'room');
 
         k.onDraw(() => {
@@ -119,10 +131,10 @@ const stage = [
             });
 
             k.drawRect({
-                width: settings.scene.width,
-                height: settings.ui.panel.height,
                 pos: k.vec2(0, 0),
                 color: settings.colors.panel,
+                width: settings.scene.width,
+                height: settings.ui.panel.height,
             });
 
             k.drawSprite({
@@ -161,6 +173,41 @@ const stage = [
             });
         });
 
+        // const textCountDrops = k.add([
+        //     k.pos(settings.scene.width - 70, 3),
+        //     k.text(`[base]${dataManger.count.drops}[/base]`, {
+        //         size: 24,
+        //         width: 50,
+        //         font: 'Silkscreen',
+        //         styles: {
+        //             base: {
+        //                 color: k.rgb(settings.colors.text),
+        //             },
+        //         },
+        //     }),
+        // ]);
+
+        (function textInitUI(dm, st) {
+            const setTextGO = [];
+            const counters = [dm.count.drops, dm.count.mushroom, dm.count.stage];
+            const posY = [3, 30, 53];
+            for (let i = 0; i < counters.length; i++) {
+                setTextGO[i] = k.add([
+                    k.pos(st.scene.width - 70, posY[i]),
+                    k.text(`[base]${counters[i]}[/base]`, {
+                        size: 24,
+                        width: 50,
+                        font: 'Silkscreen',
+                        styles: {
+                            base: {
+                                color: k.rgb(st.colors.text),
+                            },
+                        },
+                    }),
+                ]);
+            }
+        })(dataManger, settings);
+
         const level = k.addLevel(stage, {
             tileWidth: settings.tile.width,
             tileHeight: settings.tile.height,
@@ -174,5 +221,5 @@ const stage = [
         console.log(level);
     });
 
-    k.go('game', stage, settings);
+    k.go('game', stage, settings, dataManger);
 })(loader, settings);
