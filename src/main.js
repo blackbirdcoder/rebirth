@@ -173,20 +173,6 @@ const stage = [
             });
         });
 
-        // const textCountDrops = k.add([
-        //     k.pos(settings.scene.width - 70, 3),
-        //     k.text(`[base]${dataManger.count.drops}[/base]`, {
-        //         size: 24,
-        //         width: 50,
-        //         font: 'Silkscreen',
-        //         styles: {
-        //             base: {
-        //                 color: k.rgb(settings.colors.text),
-        //             },
-        //         },
-        //     }),
-        // ]);
-
         (function textInitUI(dm, st) {
             const setTextGO = [];
             const counters = [dm.count.drops, dm.count.mushroom, dm.count.stage];
