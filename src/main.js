@@ -27,20 +27,25 @@ const settings = {
             width: 64,
             height: 64,
         },
-
         iconDrop: {
             width: 24,
             height: 24,
         },
-
         iconMushroom: {
             width: 24,
             height: 24,
         },
-
         iconStage: {
             width: 44,
             height: 44,
+        },
+    },
+    game: {
+        limitComponent: 5,
+    },
+    font: {
+        size: {
+            xs: 22,
         },
     },
 };
@@ -92,20 +97,20 @@ const stage = [
     'QQQQQQQQQQQQQQQQQQQQQQQQQ',
     '                         ',
     'XXXXXXXX       XXXH   XXX',
-    '       X       X      X  ',
+    '       X       X      XQQ',
     '       X       X      XXX',
     '       X M     X M       ',
     '       XXXXH   XXXXXXXXXX',
     'XXX                      ',
-    '  X                      ',
-    '  X         E            ',
+    'QQX                      ',
+    'QQX         E            ',
     'XXX                      ',
     '        XH       XXXH    ',
     '        X        X       ',
     '        X    M   X       ',
     '        X  XXXX  X       ',
-    '   M    X  X  X  X   M   ',
-    'XXXXXXXXX  X  X  XXXXXXXX',
+    '   M    X  XQQX  X   M   ',
+    'XXXXXXXXX  XQQX  XXXXXXXX',
 ];
 
 (function main(loader, settings) {
@@ -173,25 +178,33 @@ const stage = [
             });
         });
 
-        (function textInitUI(dm, st) {
+        const textCounterUI = (function textCounterInitUI(dm, st) {
             const setTextGO = [];
             const counters = [dm.count.drops, dm.count.mushroom, dm.count.stage];
             const posY = [3, 30, 53];
+            const style = {
+                size: st.font.size.xs,
+                width: 80,
+                font: 'Silkscreen',
+                styles: {
+                    base: {
+                        color: k.rgb(st.colors.text),
+                    },
+                },
+            };
+
             for (let i = 0; i < counters.length; i++) {
                 setTextGO[i] = k.add([
                     k.pos(st.scene.width - 70, posY[i]),
-                    k.text(`[base]${counters[i]}[/base]`, {
-                        size: 24,
-                        width: 50,
-                        font: 'Silkscreen',
-                        styles: {
-                            base: {
-                                color: k.rgb(st.colors.text),
-                            },
-                        },
-                    }),
+                    k.text(`[base]${counters[i]}[/base]`, style),
                 ]);
             }
+
+            for (let i = 0; i < counters.length - 1; i++) {
+                k.add([k.pos(st.scene.width - 50, posY[i]), k.text(`[base]/${st.game.limitComponent}[/base]`, style)]);
+            }
+
+            return setTextGO;
         })(dataManger, settings);
 
         const level = k.addLevel(stage, {
