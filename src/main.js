@@ -50,6 +50,7 @@ const settings = {
     },
     player: {
         speed: 100,
+        delay: 0.4,
     },
 };
 
@@ -60,7 +61,7 @@ const k = kaplay({
     debugKey: 'd', // Temp option
 });
 
-k.debug.inspect = false; // DEBUG
+k.debug.inspect = true; // DEBUG
 
 function loader() {
     const fileName = [
@@ -136,7 +137,37 @@ const stage = {
             {
                 spriteName: 'box',
                 pos: { x: 256, y: 128 },
-                size: { width: settings.tile.height, height: 96 },
+                size: { width: settings.tile.width, height: 96 },
+            },
+            {
+                spriteName: 'box',
+                pos: { x: 256, y: 224 },
+                size: { width: 96, height: settings.tile.height },
+            },
+            {
+                spriteName: 'head',
+                pos: { x: 352, y: 224 },
+                size: { width: settings.tile.width, height: settings.tile.height },
+            },
+            {
+                spriteName: 'box',
+                pos: { x: 512, y: 224 },
+                size: { width: 288, height: settings.tile.height },
+            },
+            {
+                spriteName: 'box',
+                pos: { x: 512, y: 128 },
+                size: { width: settings.tile.width, height: 96 },
+            },
+            {
+                spriteName: 'box',
+                pos: { x: 544, y: 128 },
+                size: { width: 64, height: settings.tile.height },
+            },
+            {
+                spriteName: 'head',
+                pos: { x: 608, y: 128 },
+                size: { width: settings.tile.width, height: settings.tile.height },
             },
         ],
     },
@@ -242,7 +273,6 @@ const stage = {
 
         (function buildLevel(stg, num) {
             for (const level of stg.level[num]) {
-                console.log(level);
                 k.add([
                     k.sprite(level.spriteName, { tiled: true, width: level.size.width, height: level.size.height }),
                     k.pos(level.pos.x, level.pos.y),
@@ -268,37 +298,68 @@ const stage = {
 
         (function playerMovement(pl, st) {
             const dir = k.vec2(0, 0);
+            const abilityMove = {
+                x: true,
+                y: true,
+            };
+            const repel = () => {
+                if (dir.x) {
+                    dir.x *= -1;
+                    dir.y = 0;
+                    pl.move(dir);
+                    abilityMove.x = false;
+                    k.wait(st.player.delay, () => (abilityMove.x = true));
+                }
+                if (dir.y) {
+                    dir.x = 0;
+                    dir.y *= -1;
+                    pl.move(dir);
+                    abilityMove.y = false;
+                    k.wait(st.player.delay, () => (abilityMove.y = true));
+                }
+            };
 
             k.onKeyDown('right', () => {
-                dir.x = st.player.speed;
-                dir.y = 0;
+                if (abilityMove.x) {
+                    dir.x = st.player.speed;
+                    dir.y = 0;
+                }
             });
 
             k.onKeyDown('left', () => {
-                dir.x = -st.player.speed;
-                dir.y = 0;
+                if (abilityMove.x) {
+                    dir.x = -st.player.speed;
+                    dir.y = 0;
+                }
             });
 
             k.onKeyDown('up', () => {
-                dir.x = 0;
-                dir.y = -st.player.speed;
+                if (abilityMove.y) {
+                    dir.x = 0;
+                    dir.y = -st.player.speed;
+                }
             });
 
             k.onKeyDown('down', () => {
-                dir.x = 0;
-                dir.y = st.player.speed;
+                if (abilityMove.y) {
+                    dir.x = 0;
+                    dir.y = st.player.speed;
+                }
             });
 
             pl.onUpdate(() => {
-                pl.move(dir);
+                const plPosX = Math.floor(pl.pos.x);
+                const plPosY = Math.floor(pl.pos.y);
+
+                if (plPosX > 0 && plPosX < 736 && plPosY > 73 && plPosY < 568) {
+                    pl.move(dir);
+                } else {
+                    repel();
+                }
             });
 
-            pl.onCollide((other) => {
-                if (dir.x) {
-                    dir.x *= -1;
-                }
-                console.log('Collide', dir);
-                console.log(other.tags[0]);
+            pl.onCollide(() => {
+                repel();
             });
         })(player, settings);
     });
