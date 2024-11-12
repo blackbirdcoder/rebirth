@@ -48,6 +48,9 @@ const settings = {
             xs: 22,
         },
     },
+    player: {
+        speed: 100,
+    },
 };
 
 const k = kaplay({
@@ -98,27 +101,46 @@ function loader() {
 }
 
 // 25 X 19
-const stage = [
-    'QQQQQQQQQQQQQQQQQQQQQQQQQ',
-    'QQQQQQQQQQQQQQQQQQQQQQQQQ',
-    'QQQQQQQQQQQQQQQQQQQQQQQQQ',
-    '                         ',
-    'XXXXXXXX       XXXH   XXX',
-    '       X       X      XQQ',
-    ' P     X       X      XXX',
-    '       X M     X M       ',
-    '       XXXXH   XXXXXXXXXX',
-    'XXX                      ',
-    'QQX                      ',
-    'QQX         E            ',
-    'XXX                      ',
-    '        XH       XXXH    ',
-    '        X        X       ',
-    '        X    M   X       ',
-    '        X  XXXX  X       ',
-    '   M    X  XQQX  X   M   ',
-    'XXXXXXXXX  XQQX  XXXXXXXX',
-];
+// const stage = [
+//     'QQQQQQQQQQQQQQQQQQQQQQQQQ',
+//     'QQQQQQQQQQQQQQQQQQQQQQQQQ',
+//     'QQQQQQQQQQQQQQQQQQQQQQQQQ',
+//     '                         ',
+//     'XXXXXXXX       XXXH   XXX',
+//     '       X       X      XQQ',
+//     ' P     X       X      XXX',
+//     '       X M     X M       ',
+//     '       XXXXH   XXXXXXXXXX',
+//     'XXX                      ',
+//     'QQX                      ',
+//     'QQX         E            ',
+//     'XXX                      ',
+//     '        XH       XXXH    ',
+//     '        X        X       ',
+//     '        X    M   X       ',
+//     '        X  XXXX  X       ',
+//     '   M    X  XQQX  X   M   ',
+//     'XXXXXXXXX  XQQX  XXXXXXXX',
+// ];
+
+// 19 X 25
+
+const stage = {
+    level: {
+        1: [
+            {
+                spriteName: 'box',
+                pos: { x: 0, y: 128 },
+                size: { width: 256, height: settings.tile.height },
+            },
+            {
+                spriteName: 'box',
+                pos: { x: 256, y: 128 },
+                size: { width: settings.tile.height, height: 96 },
+            },
+        ],
+    },
+};
 
 (function main(loader, settings) {
     loader();
@@ -135,54 +157,58 @@ const stage = [
         k.layers(['room', 'ui'], 'room');
 
         k.onDraw(() => {
-            k.drawSprite({
-                sprite: 'background',
-                pos: k.vec2(0, 0),
-                width: settings.scene.width,
-                height: settings.scene.height,
-            });
+            (function background() {
+                k.drawSprite({
+                    sprite: 'background',
+                    pos: k.vec2(0, 0),
+                    width: settings.scene.width,
+                    height: settings.scene.height,
+                });
+            })();
 
-            k.drawRect({
-                pos: k.vec2(0, 0),
-                color: settings.colors.panel,
-                width: settings.scene.width,
-                height: settings.ui.panel.height,
-            });
+            (function creatingSimpleUI() {
+                k.drawRect({
+                    pos: k.vec2(0, 0),
+                    color: settings.colors.panel,
+                    width: settings.scene.width,
+                    height: settings.ui.panel.height,
+                });
 
-            k.drawSprite({
-                sprite: 'control',
-                pos: k.vec2(0, 0),
-                width: settings.ui.control.width,
-                height: settings.ui.control.height,
-            });
+                k.drawSprite({
+                    sprite: 'control',
+                    pos: k.vec2(0, 0),
+                    width: settings.ui.control.width,
+                    height: settings.ui.control.height,
+                });
 
-            k.drawSprite({
-                sprite: 'iconWaterOff',
-                pos: k.vec2(settings.scene.width / 2, 8),
-                width: settings.ui.iconWater.width,
-                height: settings.ui.iconWater.height,
-            });
+                k.drawSprite({
+                    sprite: 'iconWaterOff',
+                    pos: k.vec2(settings.scene.width / 2, 8),
+                    width: settings.ui.iconWater.width,
+                    height: settings.ui.iconWater.height,
+                });
 
-            k.drawSprite({
-                sprite: 'iconDrop',
-                pos: k.vec2(settings.scene.width - 100, 3),
-                width: settings.ui.iconDrop.width,
-                height: settings.ui.iconDrop.height,
-            });
+                k.drawSprite({
+                    sprite: 'iconDrop',
+                    pos: k.vec2(settings.scene.width - 100, 3),
+                    width: settings.ui.iconDrop.width,
+                    height: settings.ui.iconDrop.height,
+                });
 
-            k.drawSprite({
-                sprite: 'iconMushroom',
-                pos: k.vec2(settings.scene.width - 100, 28),
-                width: settings.ui.iconMushroom.width,
-                height: settings.ui.iconMushroom.height,
-            });
+                k.drawSprite({
+                    sprite: 'iconMushroom',
+                    pos: k.vec2(settings.scene.width - 100, 28),
+                    width: settings.ui.iconMushroom.width,
+                    height: settings.ui.iconMushroom.height,
+                });
 
-            k.drawSprite({
-                sprite: 'iconST',
-                pos: k.vec2(settings.scene.width - 110, 42),
-                width: settings.ui.iconStage.width,
-                height: settings.ui.iconStage.height,
-            });
+                k.drawSprite({
+                    sprite: 'iconST',
+                    pos: k.vec2(settings.scene.width - 110, 42),
+                    width: settings.ui.iconStage.width,
+                    height: settings.ui.iconStage.height,
+                });
+            })();
         });
 
         const textCounterUI = (function textCounterInitUI(dm, st) {
@@ -214,28 +240,67 @@ const stage = [
             return setTextGO;
         })(dataManger, settings);
 
-        const level = k.addLevel(stage, {
-            tileWidth: settings.tile.width,
-            tileHeight: settings.tile.height,
-            tiles: {
-                X: () => [k.sprite('box'), k.area(), k.body({ isStatic: true }), k.layer('room')],
-                H: () => [k.sprite('head'), k.area(), k.body({ isStatic: true }), k.layer('room')],
-                M: () => [k.sprite('mushroomDry'), k.area(), k.layer('room')],
-                E: () => [
-                    k.sprite('enemy', { anim: 'run' }),
-                    k.area({ shape: new k.Rect(k.vec2(0, 13), 64, 18) }),
+        (function buildLevel(stg, num) {
+            for (const level of stg.level[num]) {
+                console.log(level);
+                k.add([
+                    k.sprite(level.spriteName, { tiled: true, width: level.size.width, height: level.size.height }),
+                    k.pos(level.pos.x, level.pos.y),
+                    k.body({ isStatic: true }),
+                    k.area({
+                        shape: new k.Rect(k.vec2(0, 0), level.size.width, level.size.height),
+                    }),
                     k.layer('room'),
-                    'flinger',
-                ],
-                P: () => [
-                    k.sprite('player', { anim: 'run' }),
-                    k.area({ shape: new k.Rect(k.vec2(0, 13), 64, 18) }),
-                    k.layer('room'),
-                    'hero',
-                ],
-            },
-        });
-        console.log(level);
+                ]);
+            }
+        })(stage, dataManger.count.stage);
+
+        const player = (function buildPlayer() {
+            return k.add([
+                k.sprite('player', { anim: 'run' }),
+                k.area({ shape: new k.Rect(k.vec2(0, 10), 64, 24) }),
+                k.pos(32, 160),
+                k.body(),
+                k.layer('room'),
+                'hero',
+            ]);
+        })();
+
+        (function playerMovement(pl, st) {
+            const dir = k.vec2(0, 0);
+
+            k.onKeyDown('right', () => {
+                dir.x = st.player.speed;
+                dir.y = 0;
+            });
+
+            k.onKeyDown('left', () => {
+                dir.x = -st.player.speed;
+                dir.y = 0;
+            });
+
+            k.onKeyDown('up', () => {
+                dir.x = 0;
+                dir.y = -st.player.speed;
+            });
+
+            k.onKeyDown('down', () => {
+                dir.x = 0;
+                dir.y = st.player.speed;
+            });
+
+            pl.onUpdate(() => {
+                pl.move(dir);
+            });
+
+            pl.onCollide((other) => {
+                if (dir.x) {
+                    dir.x *= -1;
+                }
+                console.log('Collide', dir);
+                console.log(other.tags[0]);
+            });
+        })(player, settings);
     });
 
     k.go('game', stage, settings, dataManger);
