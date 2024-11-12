@@ -131,42 +131,42 @@ const stage = {
         1: [
             {
                 spriteName: 'box',
-                pos: { x: 0, y: 128 },
+                pos: { x: 0, y: 160 },
                 size: { width: 256, height: settings.tile.height },
             },
             {
                 spriteName: 'box',
-                pos: { x: 256, y: 128 },
+                pos: { x: 256, y: 160 },
                 size: { width: settings.tile.width, height: 96 },
             },
             {
                 spriteName: 'box',
-                pos: { x: 256, y: 224 },
+                pos: { x: 256, y: 256 },
                 size: { width: 96, height: settings.tile.height },
             },
             {
                 spriteName: 'head',
-                pos: { x: 352, y: 224 },
+                pos: { x: 352, y: 256 },
                 size: { width: settings.tile.width, height: settings.tile.height },
             },
             {
                 spriteName: 'box',
-                pos: { x: 512, y: 224 },
+                pos: { x: 512, y: 256 },
                 size: { width: 288, height: settings.tile.height },
             },
             {
                 spriteName: 'box',
-                pos: { x: 512, y: 128 },
+                pos: { x: 512, y: 160 },
                 size: { width: settings.tile.width, height: 96 },
             },
             {
                 spriteName: 'box',
-                pos: { x: 544, y: 128 },
+                pos: { x: 544, y: 160 },
                 size: { width: 64, height: settings.tile.height },
             },
             {
                 spriteName: 'head',
-                pos: { x: 608, y: 128 },
+                pos: { x: 608, y: 160 },
                 size: { width: settings.tile.width, height: settings.tile.height },
             },
         ],
@@ -242,6 +242,15 @@ const stage = {
             })();
         });
 
+        (function auxiliaryBarrierUI() {
+            k.add([
+                k.area({ shape: new Rect(k.vec2(0, 78), k.width(), 0.1) }),
+                k.pos(0, 0),
+                k.body({ isStatic: true }),
+                k.layer('room'),
+            ]);
+        })();
+
         const textCounterUI = (function textCounterInitUI(dm, st) {
             const setTextGO = [];
             const counters = [dm.count.drops, dm.count.mushroom, dm.count.stage];
@@ -289,7 +298,7 @@ const stage = {
             return k.add([
                 k.sprite('player', { anim: 'run' }),
                 k.area({ shape: new k.Rect(k.vec2(0, 10), 64, 24) }),
-                k.pos(32, 160),
+                k.pos(32, 192),
                 k.body(),
                 k.layer('room'),
                 'hero',
