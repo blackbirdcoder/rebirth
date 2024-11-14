@@ -54,59 +54,6 @@ const settings = {
     },
 };
 
-const k = kaplay({
-    width: settings.scene.width,
-    height: settings.scene.height,
-    background: settings.colors.background,
-    debugKey: 'd', // Temp option
-});
-
-k.debug.inspect = true; // DEBUG
-
-function loader() {
-    const fileName = [
-        'box',
-        'head',
-        'mushroomDry',
-        'mushroomLife',
-        'background',
-        'control',
-        'iconWaterOn',
-        'iconWaterOff',
-        'iconDrop',
-        'iconMushroom',
-        'iconST',
-        'bonus',
-        'lightning',
-        'lightningDown',
-        'lightningUp',
-        'lightningRight',
-    ];
-
-    for (const name of fileName) {
-        k.loadSprite(`${name}`, `sprites/${name}.png`);
-    }
-
-    const fileNameAnimated = ['enemy', 'player'];
-
-    for (const name of fileNameAnimated) {
-        k.loadSprite(`${name}`, `sprites/${name}.png`, {
-            sliceX: 6,
-            sliceY: 1,
-            anims: {
-                run: {
-                    from: 0,
-                    to: 5,
-                    loop: true,
-                    speed: 5,
-                },
-            },
-        });
-    }
-
-    k.loadFont('Silkscreen', 'fonts/Silkscreen.woff2');
-}
-
 const stage = {
     level: {
         1: {
@@ -266,10 +213,73 @@ const stage = {
                     pos: { x: 320, y: 320 },
                     tag: 'enemyShoot',
                 },
+                {
+                    spriteName: 'enemy',
+                    pos: { x: 0, y: 0 },
+                    tag: 'enemy',
+                },
+                {
+                    spriteName: 'enemy',
+                    pos: { x: 0, y: 0 },
+                    tag: 'enemy',
+                },
             ],
         },
     },
 };
+
+const k = kaplay({
+    width: settings.scene.width,
+    height: settings.scene.height,
+    background: settings.colors.background,
+    debugKey: 'd', // Temp option
+});
+
+k.debug.inspect = true; // DEBUG
+
+function loader() {
+    const fileName = [
+        'box',
+        'head',
+        'mushroomDry',
+        'mushroomLife',
+        'background',
+        'control',
+        'iconWaterOn',
+        'iconWaterOff',
+        'iconDrop',
+        'iconMushroom',
+        'iconST',
+        'bonus',
+        'lightning',
+        'lightningDown',
+        'lightningUp',
+        'lightningRight',
+    ];
+
+    for (const name of fileName) {
+        k.loadSprite(`${name}`, `sprites/${name}.png`);
+    }
+
+    const fileNameAnimated = ['enemy', 'player'];
+
+    for (const name of fileNameAnimated) {
+        k.loadSprite(`${name}`, `sprites/${name}.png`, {
+            sliceX: 6,
+            sliceY: 1,
+            anims: {
+                run: {
+                    from: 0,
+                    to: 5,
+                    loop: true,
+                    speed: 5,
+                },
+            },
+        });
+    }
+
+    k.loadFont('Silkscreen', 'fonts/Silkscreen.woff2');
+}
 
 (function main(loader, settings) {
     loader();
@@ -344,12 +354,17 @@ const stage = {
         });
 
         (function auxiliaryBarrierUI() {
-            k.add([
+            const barrier = k.add([
                 k.area({ shape: new Rect(k.vec2(0, 78), k.width(), 0.1) }),
                 k.pos(0, 0),
                 k.body({ isStatic: true }),
                 k.layer('room'),
             ]);
+            barrier.onCollide((other) => {
+                if (other.tags[0] === 'lightning') {
+                    other.destroy();
+                }
+            });
         })();
 
         const textCounterUI = (function textCounterInitUI(dm, st) {
@@ -451,7 +466,7 @@ const stage = {
                         k.body({ isStatic: true }),
                         k.area({
                             shape: new k.Rect(k.vec2(0, 16), 64, 16),
-                            collisionIgnore: ['enemy', 'bonus'],
+                            collisionIgnore: ['enemy', 'enemyShoot', 'bonus'],
                         }),
                         k.layer('room'),
                         k.timer(),
@@ -472,13 +487,27 @@ const stage = {
             };
 
             for (const enemy of lgo.enemies) {
-                if (enemy.get('enemyShoot')) {
+                if (enemy.tags[0] === 'enemyShoot') {
                     enemyShoot['enemy'] = enemy;
                     enemyShoot.pos.x = enemy.pos.x;
                     enemyShoot.pos.y = enemy.pos.y;
                 }
+
+                if (enemy.tags[0] === 'enemy') {
+                    enemy.pos.x = 1036;
+                    enemy.pos.y = k.randi(80, 537);
+                    enemy.applyImpulse(vec2(k.randi(-50, -151), 0));
+
+                    enemy.onUpdate(() => {
+                        if (Math.floor(enemy.pos.x) < 0) {
+                            enemy.pos.x = 1036;
+                            enemy.pos.y = k.randi(80, 537);
+                        }
+                    });
+                }
             }
-            const enemyMove = function (startPosX, posY, endPosX, speed) {
+
+            const enemyShootMove = function (startPosX, posY, endPosX, speed) {
                 k.wait(2, () => {
                     enemyShoot.enemy
                         .tween(
@@ -488,13 +517,13 @@ const stage = {
                             (val) => (enemyShoot.enemy.pos = val)
                         )
                         .then(() => {
-                            enemyMove(endPosX, enemyShoot.pos.y, startPosX, 2);
+                            enemyShootMove(endPosX, enemyShoot.pos.y, startPosX, 2);
                         });
                 });
             };
-            enemyMove(enemyShoot.pos.x, enemyShoot.pos.y, enemyShoot.pos.x + 264, 2);
+            enemyShootMove(enemyShoot.pos.x, enemyShoot.pos.y, enemyShoot.pos.x + 264, 2);
 
-            const enemyThrowingLightning = function () {
+            const enemyShootThrowingLightning = function () {
                 const directions = [
                     { lightning: k.LEFT },
                     { lightningDown: k.DOWN },
@@ -512,11 +541,12 @@ const stage = {
                             k.body({ isStatic: true }),
                             k.move(Object.values(currentLightning)[0], speeds[k.randi(speeds.length)]),
                             k.offscreen({ destroy: true }),
+                            'lightning',
                         ]);
                     });
                 });
             };
-            enemyThrowingLightning();
+            enemyShootThrowingLightning();
         })(levelGO);
 
         const player = (function buildPlayer() {
