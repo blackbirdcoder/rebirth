@@ -68,6 +68,7 @@ function loader() {
         'box',
         'head',
         'mushroomDry',
+        'mushroomLife',
         'background',
         'control',
         'iconWaterOn',
@@ -75,6 +76,7 @@ function loader() {
         'iconDrop',
         'iconMushroom',
         'iconST',
+        'bonus',
     ];
 
     for (const name of fileName) {
@@ -128,48 +130,139 @@ function loader() {
 
 const stage = {
     level: {
-        1: [
-            {
-                spriteName: 'box',
-                pos: { x: 0, y: 160 },
-                size: { width: 256, height: settings.tile.height },
-            },
-            {
-                spriteName: 'box',
-                pos: { x: 256, y: 160 },
-                size: { width: settings.tile.width, height: 96 },
-            },
-            {
-                spriteName: 'box',
-                pos: { x: 256, y: 256 },
-                size: { width: 96, height: settings.tile.height },
-            },
-            {
-                spriteName: 'head',
-                pos: { x: 352, y: 256 },
-                size: { width: settings.tile.width, height: settings.tile.height },
-            },
-            {
-                spriteName: 'box',
-                pos: { x: 512, y: 256 },
-                size: { width: 288, height: settings.tile.height },
-            },
-            {
-                spriteName: 'box',
-                pos: { x: 512, y: 160 },
-                size: { width: settings.tile.width, height: 96 },
-            },
-            {
-                spriteName: 'box',
-                pos: { x: 544, y: 160 },
-                size: { width: 64, height: settings.tile.height },
-            },
-            {
-                spriteName: 'head',
-                pos: { x: 608, y: 160 },
-                size: { width: settings.tile.width, height: settings.tile.height },
-            },
-        ],
+        1: {
+            blocks: [
+                {
+                    spriteName: 'box',
+                    pos: { x: 0, y: 160 },
+                    size: { width: 256, height: settings.tile.height },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 256, y: 160 },
+                    size: { width: settings.tile.width, height: 96 },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 256, y: 256 },
+                    size: { width: 96, height: settings.tile.height },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'head',
+                    pos: { x: 352, y: 256 },
+                    size: { width: settings.tile.width, height: settings.tile.height },
+                    tag: 'head',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 512, y: 256 },
+                    size: { width: 288, height: settings.tile.height },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 512, y: 160 },
+                    size: { width: settings.tile.width, height: 96 },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 544, y: 160 },
+                    size: { width: 64, height: settings.tile.height },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'head',
+                    pos: { x: 608, y: 160 },
+                    size: { width: settings.tile.width, height: settings.tile.height },
+                    tag: 'head',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 0, y: 416 },
+                    size: { width: 128, height: settings.tile.height },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 128, y: 352 },
+                    size: { width: settings.tile.width, height: 96 },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'head',
+                    pos: { x: 160, y: 352 },
+                    size: { width: settings.tile.width, height: settings.tile.height },
+                    tag: 'head',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 0, y: 568 },
+                    size: { width: 320, height: settings.tile.height },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 288, y: 472 },
+                    size: { width: settings.tile.width, height: 96 },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 320, y: 472 },
+                    size: { width: 64, height: settings.tile.height },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'head',
+                    pos: { x: 384, y: 472 },
+                    size: { width: settings.tile.width, height: settings.tile.height },
+                    tag: 'head',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 512, y: 568 },
+                    size: { width: 288, height: settings.tile.height },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 512, y: 406 },
+                    size: { width: settings.tile.width, height: 162 },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'box',
+                    pos: { x: 544, y: 406 },
+                    size: { width: 96, height: settings.tile.height },
+                    tag: 'box',
+                },
+                {
+                    spriteName: 'head',
+                    pos: { x: 640, y: 406 },
+                    size: { width: settings.tile.width, height: settings.tile.height },
+                    tag: 'head',
+                },
+            ],
+            organic: [
+                {
+                    spriteName: 'mushroomDry',
+                    pos: { x: 320, y: 224 },
+                    tag: 'mushroom',
+                },
+            ],
+            bonus: [
+                {
+                    spriteName: 'bonus',
+                    pos: { x: 384, y: 472 + 64 },
+                    tag: 'bonus',
+                    quantity: 5,
+                },
+            ],
+        },
     },
 };
 
@@ -280,19 +373,67 @@ const stage = {
             return setTextGO;
         })(dataManger, settings);
 
-        (function buildLevel(stg, num) {
-            for (const level of stg.level[num]) {
-                k.add([
-                    k.sprite(level.spriteName, { tiled: true, width: level.size.width, height: level.size.height }),
-                    k.pos(level.pos.x, level.pos.y),
-                    k.body({ isStatic: true }),
-                    k.area({
-                        shape: new k.Rect(k.vec2(0, 0), level.size.width, level.size.height),
-                    }),
-                    k.layer('room'),
-                ]);
+        const levelGO = (function buildLevel(stg, num, tile) {
+            const levelObjects = {
+                blocks: [],
+                organic: [],
+                bonus: [],
+                scatterBonus: function (bonusData) {
+                    for (const item of bonusData) {
+                        for (let i = 0; i < item.quantity; i++) {
+                            const pos = { x: k.randi(768), y: k.randi(100, 568) };
+                            levelObjects.bonus.push(
+                                k.add([
+                                    k.sprite(item.spriteName),
+                                    k.pos(pos.x, pos.y),
+                                    k.area({
+                                        shape: new k.Rect(k.vec2(0, 0), tile.width, tile.height),
+                                        collisionIgnore: ['enemy'],
+                                    }),
+                                    k.body(),
+                                    k.layer('room'),
+                                    item.tag,
+                                ])
+                            );
+                        }
+                    }
+                },
+            };
+
+            for (const item of stg.level[num].blocks) {
+                levelObjects.blocks.push(
+                    k.add([
+                        k.sprite(item.spriteName, { tiled: true, width: item.size.width, height: item.size.height }),
+                        k.pos(item.pos.x, item.pos.y),
+                        k.body({ isStatic: true }),
+                        k.area({
+                            shape: new k.Rect(k.vec2(0, 0), item.size.width, item.size.height),
+                        }),
+                        k.layer('room'),
+                        item.tag,
+                    ])
+                );
             }
-        })(stage, dataManger.count.stage);
+            for (const item of stg.level[num].organic) {
+                levelObjects.organic.push(
+                    k.add([
+                        k.sprite(item.spriteName),
+                        k.pos(item.pos.x, item.pos.y),
+                        k.body({ isStatic: true }),
+                        k.area({
+                            shape: new k.Rect(k.vec2(0, 0), 32, 32),
+                            collisionIgnore: ['hero'],
+                        }),
+                        k.layer('room'),
+                        item.tag,
+                    ])
+                );
+            }
+            levelObjects.scatterBonus(stg.level[num].bonus);
+            return levelObjects;
+        })(stage, dataManger.count.stage, settings.tile);
+
+        console.log(levelGO);
 
         const player = (function buildPlayer() {
             return k.add([
@@ -371,6 +512,12 @@ const stage = {
                 repel();
             });
         })(player, settings);
+
+        (function playerExternalHandler(pl) {
+            pl.onCollide((other) => {
+                console.log(other);
+            });
+        })(player);
     });
 
     k.go('game', stage, settings, dataManger);
