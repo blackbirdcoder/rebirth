@@ -103,31 +103,6 @@ function loader() {
     k.loadFont('Silkscreen', 'fonts/Silkscreen.woff2');
 }
 
-// 25 X 19
-// const stage = [
-//     'QQQQQQQQQQQQQQQQQQQQQQQQQ',
-//     'QQQQQQQQQQQQQQQQQQQQQQQQQ',
-//     'QQQQQQQQQQQQQQQQQQQQQQQQQ',
-//     '                         ',
-//     'XXXXXXXX       XXXH   XXX',
-//     '       X       X      XQQ',
-//     ' P     X       X      XXX',
-//     '       X M     X M       ',
-//     '       XXXXH   XXXXXXXXXX',
-//     'XXX                      ',
-//     'QQX                      ',
-//     'QQX         E            ',
-//     'XXX                      ',
-//     '        XH       XXXH    ',
-//     '        X        X       ',
-//     '        X    M   X       ',
-//     '        X  XXXX  X       ',
-//     '   M    X  XQQX  X   M   ',
-//     'XXXXXXXXX  XQQX  XXXXXXXX',
-// ];
-
-// 19 X 25
-
 const stage = {
     level: {
         1: {
@@ -253,6 +228,26 @@ const stage = {
                     pos: { x: 320, y: 224 },
                     tag: 'mushroom',
                 },
+                {
+                    spriteName: 'mushroomDry',
+                    pos: { x: 704, y: 224 },
+                    tag: 'mushroom',
+                },
+                {
+                    spriteName: 'mushroomDry',
+                    pos: { x: 64, y: 384 },
+                    tag: 'mushroom',
+                },
+                {
+                    spriteName: 'mushroomDry',
+                    pos: { x: 224, y: 536 },
+                    tag: 'mushroom',
+                },
+                {
+                    spriteName: 'mushroomDry',
+                    pos: { x: 721, y: 536 },
+                    tag: 'mushroom',
+                },
             ],
             bonus: [
                 {
@@ -274,6 +269,9 @@ const stage = {
             drops: 0,
             mushroom: 0,
             stage: 1,
+        },
+        activate: {
+            watering: false,
         },
     };
 
@@ -345,7 +343,12 @@ const stage = {
         })();
 
         const textCounterUI = (function textCounterInitUI(dm, st) {
-            const setTextGO = [];
+            const nameComp = ['drops', 'mushroom', 'stage'];
+            const setTextGO = {
+                drops: null,
+                mushroom: null,
+                stage: null,
+            };
             const counters = [dm.count.drops, dm.count.mushroom, dm.count.stage];
             const posY = [3, 30, 53];
             const style = {
@@ -360,7 +363,7 @@ const stage = {
             };
 
             for (let i = 0; i < counters.length; i++) {
-                setTextGO[i] = k.add([
+                setTextGO[nameComp[i]] = k.add([
                     k.pos(st.scene.width - 70, posY[i]),
                     k.text(`[base]${counters[i]}[/base]`, style),
                 ]);
@@ -513,11 +516,23 @@ const stage = {
             });
         })(player, settings);
 
-        (function playerExternalHandler(pl) {
+        (function playerExternalHandler(pl, dm, st, lgo, stg, txtCmp) {
             pl.onCollide((other) => {
-                console.log(other);
+                if (other.tags[0] === 'bonus') {
+                    console.log(txtCmp);
+                    other.destroy();
+                    ++dm.count.drops;
+                    txtCmp.drops.text = `[base]${dm.count.drops}[/base]`;
+                    console.log(dm.count.drops);
+                    if (dm.count.drops == st.game.limitComponent) {
+                        dm.activate.watering = true;
+                        // lgo.scatterBonus(stg.level[dm.count.stage].bonus);
+                        // dm.count.drops = 0;
+                        // txtCmp.drops.text = `[base]${dm.count.drops}[/base]`;
+                    }
+                }
             });
-        })(player);
+        })(player, dataManger, settings, levelGO, stage, textCounterUI);
     });
 
     k.go('game', stage, settings, dataManger);
