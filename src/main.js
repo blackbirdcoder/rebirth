@@ -77,6 +77,10 @@ function loader() {
         'iconMushroom',
         'iconST',
         'bonus',
+        'lightning',
+        'lightningDown',
+        'lightningUp',
+        'lightningRight',
     ];
 
     for (const name of fileName) {
@@ -252,9 +256,15 @@ const stage = {
             bonus: [
                 {
                     spriteName: 'bonus',
-                    pos: { x: 384, y: 472 + 64 },
                     tag: 'bonus',
                     quantity: 5,
+                },
+            ],
+            enemies: [
+                {
+                    spriteName: 'enemy',
+                    pos: { x: 320, y: 320 },
+                    tag: 'enemyShoot',
                 },
             ],
         },
@@ -381,6 +391,7 @@ const stage = {
                 blocks: [],
                 organic: [],
                 bonus: [],
+                enemies: [],
                 scatterBonus: function (bonusData) {
                     for (const item of bonusData) {
                         for (let i = 0; i < item.quantity; i++) {
@@ -424,10 +435,26 @@ const stage = {
                         k.pos(item.pos.x, item.pos.y),
                         k.body({ isStatic: true }),
                         k.area({
-                            shape: new k.Rect(k.vec2(0, 0), 32, 32),
+                            shape: new k.Rect(k.vec2(0, 0), tile.width, tile.height),
                             collisionIgnore: ['hero'],
                         }),
                         k.layer('room'),
+                        item.tag,
+                    ])
+                );
+            }
+            for (const item of stg.level[num].enemies) {
+                levelObjects.enemies.push(
+                    k.add([
+                        k.sprite(item.spriteName, { anim: 'run' }),
+                        k.pos(item.pos.x, item.pos.y),
+                        k.body({ isStatic: true }),
+                        k.area({
+                            shape: new k.Rect(k.vec2(0, 16), 64, 16),
+                            collisionIgnore: ['enemy', 'bonus'],
+                        }),
+                        k.layer('room'),
+                        k.timer(),
                         item.tag,
                     ])
                 );
@@ -437,6 +464,60 @@ const stage = {
         })(stage, dataManger.count.stage, settings.tile);
 
         console.log(levelGO);
+
+        (function enemiesHandling(lgo) {
+            const enemyShoot = {
+                enemy: null,
+                pos: { x: undefined, y: undefined },
+            };
+
+            for (const enemy of lgo.enemies) {
+                if (enemy.get('enemyShoot')) {
+                    enemyShoot['enemy'] = enemy;
+                    enemyShoot.pos.x = enemy.pos.x;
+                    enemyShoot.pos.y = enemy.pos.y;
+                }
+            }
+            const enemyMove = function (startPosX, posY, endPosX, speed) {
+                k.wait(2, () => {
+                    enemyShoot.enemy
+                        .tween(
+                            k.vec2(startPosX, posY),
+                            k.vec2(endPosX, posY),
+                            speed,
+                            (val) => (enemyShoot.enemy.pos = val)
+                        )
+                        .then(() => {
+                            enemyMove(endPosX, enemyShoot.pos.y, startPosX, 2);
+                        });
+                });
+            };
+            enemyMove(enemyShoot.pos.x, enemyShoot.pos.y, enemyShoot.pos.x + 264, 2);
+
+            const enemyThrowingLightning = function () {
+                const directions = [
+                    { lightning: k.LEFT },
+                    { lightningDown: k.DOWN },
+                    { lightningUp: k.UP },
+                    { lightningRight: k.RIGHT },
+                ];
+                k.wait(2, () => {
+                    k.loop(1, () => {
+                        const speeds = [175, 255, 300];
+                        const currentLightning = directions[k.randi(directions.length)];
+                        const lightning = add([
+                            k.sprite(Object.keys(currentLightning)[0]),
+                            k.pos(enemyShoot.enemy.pos.x, enemyShoot.enemy.pos.y),
+                            k.area({ collisionIgnore: ['enemy', 'bonus'] }),
+                            k.body({ isStatic: true }),
+                            k.move(Object.values(currentLightning)[0], speeds[k.randi(speeds.length)]),
+                            k.offscreen({ destroy: true }),
+                        ]);
+                    });
+                });
+            };
+            enemyThrowingLightning();
+        })(levelGO);
 
         const player = (function buildPlayer() {
             return k.add([
