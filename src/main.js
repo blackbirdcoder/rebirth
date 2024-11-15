@@ -293,6 +293,7 @@ function loader() {
         },
         activate: {
             watering: false,
+            pause: false,
         },
     };
 
@@ -488,15 +489,12 @@ function loader() {
             return levelObjects;
         })(stage, dataManger.count.stage, settings.tile);
 
-        console.log(levelGO);
-
         (function mushroomsHandling(lgo, lim, tile, txtCmp, dm) {
             for (const mushroom of lgo.organic) {
                 mushroom.onCollide((other) => {
                     if (other.tags[0] === 'drops') {
                         other.destroy();
                         ++mushroom.wateringCounter;
-                        console.log(mushroom.wateringCounter);
                         if (mushroom.wateringCounter === lim) {
                             const pos = { x: mushroom.pos.x, y: mushroom.pos.y };
                             mushroom.destroy();
@@ -519,7 +517,7 @@ function loader() {
             }
         })(levelGO, settings.game.limitComponent, settings.tile, textCounterUI, dataManger);
 
-        (function enemiesHandling(lgo) {
+        (function enemiesHandling(lgo, dm) {
             const enemyShoot = {
                 enemy: null,
                 pos: { x: undefined, y: undefined },
@@ -569,24 +567,32 @@ function loader() {
                     { lightningUp: k.UP },
                     { lightningRight: k.RIGHT },
                 ];
+
+                const createLightning = function () {
+                    if (dm.activate.pause) {
+                        return false;
+                    }
+                    const speeds = [175, 255, 300];
+                    const currentLightning = directions[k.randi(directions.length)];
+                    const lightning = add([
+                        k.sprite(Object.keys(currentLightning)[0]),
+                        k.pos(enemyShoot.enemy.pos.x, enemyShoot.enemy.pos.y),
+                        k.area({ collisionIgnore: ['enemy', 'bonus'] }),
+                        k.body({ isStatic: true }),
+                        k.move(Object.values(currentLightning)[0], speeds[k.randi(speeds.length)]),
+                        k.offscreen({ destroy: true }),
+                        'lightning',
+                    ]);
+                };
+
                 k.wait(2, () => {
                     k.loop(1, () => {
-                        const speeds = [175, 255, 300];
-                        const currentLightning = directions[k.randi(directions.length)];
-                        const lightning = add([
-                            k.sprite(Object.keys(currentLightning)[0]),
-                            k.pos(enemyShoot.enemy.pos.x, enemyShoot.enemy.pos.y),
-                            k.area({ collisionIgnore: ['enemy', 'bonus'] }),
-                            k.body({ isStatic: true }),
-                            k.move(Object.values(currentLightning)[0], speeds[k.randi(speeds.length)]),
-                            k.offscreen({ destroy: true }),
-                            'lightning',
-                        ]);
+                        createLightning();
                     });
                 });
             };
             enemyShootThrowingLightning();
-        })(levelGO);
+        })(levelGO, dataManger);
 
         const player = (function buildPlayer() {
             return k.add([
@@ -685,7 +691,7 @@ function loader() {
             });
 
             k.onKeyPress('space', () => {
-                if (dm.activate.watering) {
+                if (dm.activate.watering && !dm.activate.pause) {
                     --dm.count.drops;
                     txtCmp.drops.text = `[base]${dm.count.drops}[/base]`;
                     const currentDrops = k.add([
@@ -706,7 +712,36 @@ function loader() {
                 }
             });
         })(player, dataManger, settings, levelGO, stage, textCounterUI);
-    });
 
+        (function pauseHandler(dm, clr, sc, fs) {
+            let pausedWindow = null;
+            const pauseText = 'pause';
+            const style = {
+                size: fs.xs * 3,
+                font: 'Silkscreen',
+                styles: {
+                    base: {
+                        color: k.rgb(clr.text),
+                    },
+                },
+            };
+            k.onKeyPress('p', () => {
+                k.get().forEach((item) => {
+                    item.paused = !dm.activate.pause;
+                });
+                dm.activate.pause = !dm.activate.pause;
+                if (dm.activate.pause) {
+                    pausedWindow = k.add([k.rect(k.width(), k.height()), k.color(clr.panel), k.layer('ui')]);
+                    pausedWindow.add([
+                        k.text(`[base]${pauseText}[/base]`, style),
+                        k.anchor('center'),
+                        k.pos(sc.width / 2, sc.height / 2),
+                    ]);
+                } else {
+                    pausedWindow.destroy();
+                }
+            });
+        })(dataManger, settings.colors, settings.scene, settings.font.size);
+    });
     k.go('game', stage, settings, dataManger);
 })(loader, settings);
