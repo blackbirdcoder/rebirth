@@ -678,6 +678,10 @@ function loader() {
                 if (dm.count.drops == st.game.limitComponent) {
                     dm.activate.watering = true;
                 }
+                if (dm.count.mushroom == st.game.limitComponent) {
+                    dm.activate.watering = false;
+                    console.log('YOU WIN! NEXT STAGE ...');
+                }
             });
 
             k.onKeyPress('space', () => {
