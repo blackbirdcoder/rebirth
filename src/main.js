@@ -255,6 +255,7 @@ function loader() {
         'lightningDown',
         'lightningUp',
         'lightningRight',
+        'drops',
     ];
 
     for (const name of fileName) {
@@ -308,7 +309,7 @@ function loader() {
                 });
             })();
 
-            (function creatingSimpleUI() {
+            (function creatingSimpleUI(dm) {
                 k.drawRect({
                     pos: k.vec2(0, 0),
                     color: settings.colors.panel,
@@ -322,13 +323,21 @@ function loader() {
                     width: settings.ui.control.width,
                     height: settings.ui.control.height,
                 });
-
-                k.drawSprite({
-                    sprite: 'iconWaterOff',
-                    pos: k.vec2(settings.scene.width / 2, 8),
-                    width: settings.ui.iconWater.width,
-                    height: settings.ui.iconWater.height,
-                });
+                if (dm.activate.watering) {
+                    k.drawSprite({
+                        sprite: 'iconWaterOn',
+                        pos: k.vec2(settings.scene.width / 2, 8),
+                        width: settings.ui.iconWater.width,
+                        height: settings.ui.iconWater.height,
+                    });
+                } else {
+                    k.drawSprite({
+                        sprite: 'iconWaterOff',
+                        pos: k.vec2(settings.scene.width / 2, 8),
+                        width: settings.ui.iconWater.width,
+                        height: settings.ui.iconWater.height,
+                    });
+                }
 
                 k.drawSprite({
                     sprite: 'iconDrop',
@@ -350,7 +359,7 @@ function loader() {
                     width: settings.ui.iconStage.width,
                     height: settings.ui.iconStage.height,
                 });
-            })();
+            })(dataManger);
         });
 
         (function auxiliaryBarrierUI() {
@@ -455,6 +464,7 @@ function loader() {
                         }),
                         k.layer('room'),
                         item.tag,
+                        { wateringCounter: 0 },
                     ])
                 );
             }
@@ -466,7 +476,7 @@ function loader() {
                         k.body({ isStatic: true }),
                         k.area({
                             shape: new k.Rect(k.vec2(0, 16), 64, 16),
-                            collisionIgnore: ['enemy', 'enemyShoot', 'bonus'],
+                            collisionIgnore: ['enemy', 'enemyShoot', 'bonus', 'mushroom', 'mushroomLife'],
                         }),
                         k.layer('room'),
                         k.timer(),
@@ -479,6 +489,35 @@ function loader() {
         })(stage, dataManger.count.stage, settings.tile);
 
         console.log(levelGO);
+
+        (function mushroomsHandling(lgo, lim, tile, txtCmp, dm) {
+            for (const mushroom of lgo.organic) {
+                mushroom.onCollide((other) => {
+                    if (other.tags[0] === 'drops') {
+                        other.destroy();
+                        ++mushroom.wateringCounter;
+                        console.log(mushroom.wateringCounter);
+                        if (mushroom.wateringCounter === lim) {
+                            const pos = { x: mushroom.pos.x, y: mushroom.pos.y };
+                            mushroom.destroy();
+                            k.add([
+                                k.sprite('mushroomLife'),
+                                k.pos(pos.x, pos.y),
+                                k.body({ isStatic: true }),
+                                k.area({
+                                    shape: new k.Rect(k.vec2(0, 0), tile.width, tile.height),
+                                    collisionIgnore: ['hero'],
+                                }),
+                                k.layer('room'),
+                                'mushroomLife',
+                            ]);
+                            ++dm.count.mushroom;
+                            txtCmp.mushroom.text = `[base]${dm.count.mushroom}[/base]`;
+                        }
+                    }
+                });
+            }
+        })(levelGO, settings.game.limitComponent, settings.tile, textCounterUI, dataManger);
 
         (function enemiesHandling(lgo) {
             const enemyShoot = {
@@ -552,7 +591,7 @@ function loader() {
         const player = (function buildPlayer() {
             return k.add([
                 k.sprite('player', { anim: 'run' }),
-                k.area({ shape: new k.Rect(k.vec2(0, 10), 64, 24) }),
+                k.area({ shape: new k.Rect(k.vec2(0, 10), 64, 24), collisionIgnore: ['mushroom', 'mushroomLife'] }),
                 k.pos(32, 192),
                 k.body(),
                 k.layer('room'),
@@ -630,16 +669,35 @@ function loader() {
         (function playerExternalHandler(pl, dm, st, lgo, stg, txtCmp) {
             pl.onCollide((other) => {
                 if (other.tags[0] === 'bonus') {
-                    console.log(txtCmp);
                     other.destroy();
                     ++dm.count.drops;
                     txtCmp.drops.text = `[base]${dm.count.drops}[/base]`;
-                    console.log(dm.count.drops);
-                    if (dm.count.drops == st.game.limitComponent) {
-                        dm.activate.watering = true;
-                        // lgo.scatterBonus(stg.level[dm.count.stage].bonus);
-                        // dm.count.drops = 0;
-                        // txtCmp.drops.text = `[base]${dm.count.drops}[/base]`;
+                }
+            });
+            pl.onUpdate(() => {
+                if (dm.count.drops == st.game.limitComponent) {
+                    dm.activate.watering = true;
+                }
+            });
+
+            k.onKeyPress('space', () => {
+                if (dm.activate.watering) {
+                    --dm.count.drops;
+                    txtCmp.drops.text = `[base]${dm.count.drops}[/base]`;
+                    const currentDrops = k.add([
+                        k.sprite('drops'),
+                        k.pos(pl.pos.x + 16, pl.pos.y),
+                        k.body({ isStatic: true }),
+                        k.area({ collisionIgnore: ['hero', 'enemy', 'lightning', 'shootEnemy'] }),
+                        k.move(k.DOWN, 150),
+                        k.layer('room'),
+                        'drops',
+                    ]);
+                    if (dm.count.drops <= 0) {
+                        dm.activate.watering = false;
+                        k.wait(2, () => {
+                            lgo.scatterBonus(stg.level[dm.count.stage].bonus);
+                        });
                     }
                 }
             });
