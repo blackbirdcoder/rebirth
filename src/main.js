@@ -297,9 +297,9 @@ function loader() {
         },
     };
 
-    k.scene('game', (stage, settings, dataManger) => {
-        k.layers(['room', 'ui'], 'room');
+    k.layers(['room', 'ui'], 'room');
 
+    k.scene('game', (stage, settings, dataManger) => {
         k.onDraw(() => {
             (function background() {
                 k.drawSprite({
@@ -742,6 +742,23 @@ function loader() {
                 }
             });
         })(dataManger, settings.colors, settings.scene, settings.font.size);
+
+        k.onKeyPress('r', () => {
+            k.get().forEach((item) => item.destroy());
+            dataManger = {
+                count: {
+                    drops: 0,
+                    mushroom: 0,
+                    stage: 1,
+                },
+                activate: {
+                    watering: false,
+                    pause: false,
+                },
+            };
+            k.go('game', stage, settings, dataManger);
+        });
     });
+
     k.go('game', stage, settings, dataManger);
 })(loader, settings);
