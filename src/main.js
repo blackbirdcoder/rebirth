@@ -1,5 +1,6 @@
 import kaplay from 'kaplay';
 import 'kaplay/global';
+import { zzfx } from '../public/libs/zzfx.micro.js';
 
 const settings = {
     scene: {
@@ -52,6 +53,25 @@ const settings = {
     player: {
         speed: 100,
         delay: 0.4,
+    },
+    effects: {
+        mushroom: {
+            hit: [1.3, 0.05, 514, 0.01, 0.1, 0.17, 1, 2.4, -1, 35, 0, 0, 0, 0, 0, 0, 0.05, 1, 0.04, 0, 0],
+            grow: [1.3, 0, 492, 0.15, 0.04, 0.13, 0, 2.8, 0, 30, 0, 0, 0, 0, 0, 0, 0.03, 0.74, 0.02, 0, -1212],
+        },
+        drops: {
+            take: [1.3, 0, 208, 0.01, 0.06, 0.12, 0, 1.5, -4, 0, 433, 0.08, 0.01, 0.3, 7.4, 0, 0.07, 0.73, 0.04, 0, 0],
+        },
+        pause: {
+            click: [1.3, 0, 441, 0.03, 0, 0.18, 0, 1.7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.81, 0.03, 0, 129],
+        },
+        game: {
+            loser: [1.3, 0, 220, 0.12, 0.18, 0.58, 2, 0.9, -8.9, 0, 0, 0, 0, 0, 0, 0.9, 0, 0.49, 0.14, 0, 0],
+            restart: [1.3, 0, 685, 0.02, 0.21, 0.35, 0, 1.3, 3, 0, 112, 0.05, 0.04, 0, 10, 0, 0.04, 0.95, 0.26, 0, 0],
+            win: [
+                1.3, 0, 349.2282, 0.24, 0.21, 0.33, 0, 0.8, 0, 0, 231, 0.01, 0.09, 0, 0, 0, 0.01, 0.87, 0.27, 0.01, 7,
+            ],
+        },
     },
 };
 
@@ -281,6 +301,7 @@ function loader() {
     }
 
     k.loadFont('Silkscreen', 'fonts/Silkscreen.woff2');
+    k.loadMusic('bgsound', 'music/fin.ogg');
 }
 
 (function main(loader, settings) {
@@ -324,9 +345,25 @@ function loader() {
         return window;
     };
 
+    const audioEffect = function (audio) {
+        zzfx(...audio);
+    };
+
     k.layers(['room', 'ui'], 'room');
 
-    k.scene('game', (stage, settings, dataManger) => {
+    k.scene('start', () => {
+        k.onKeyPress('enter', () => {
+            k.go('game', stage, settings, dataManger);
+        });
+    });
+
+    const music = k.play('bgsound');
+    music.volume = 8.0;
+    music.loop = true;
+    music.stop();
+
+    k.scene('game', (stage, settings, dataManger, ms) => {
+        music.play();
         k.onDraw(() => {
             (function background() {
                 k.drawSprite({
@@ -516,7 +553,7 @@ function loader() {
             return levelObjects;
         })(stage, dataManger.count.stage, settings.tile);
 
-        (function mushroomsHandling(lgo, lim, tile, txtCmp, dm, bli) {
+        (function mushroomsHandling(lgo, lim, tile, txtCmp, dm, bli, eff, au) {
             const blinking = function (mushroom, bli) {
                 mushroom.use('color');
                 mushroom.color = k.rgb(bli);
@@ -531,6 +568,7 @@ function loader() {
                         other.destroy();
                         blinking(mushroom, bli);
                         ++mushroom.wateringCounter;
+                        if (mushroom.wateringCounter <= 4) au(eff.hit);
                         if (mushroom.wateringCounter === lim) {
                             const pos = { x: mushroom.pos.x, y: mushroom.pos.y };
                             mushroom.destroy();
@@ -545,13 +583,23 @@ function loader() {
                                 k.layer('room'),
                                 'mushroomLife',
                             ]);
+                            au(eff.grow);
                             ++dm.count.mushroom;
                             txtCmp.mushroom.text = `[base]${dm.count.mushroom}[/base]`;
                         }
                     }
                 });
             }
-        })(levelGO, settings.game.limitComponent, settings.tile, textCounterUI, dataManger, settings.colors.blinking);
+        })(
+            levelGO,
+            settings.game.limitComponent,
+            settings.tile,
+            textCounterUI,
+            dataManger,
+            settings.colors.blinking,
+            settings.effects.mushroom,
+            audioEffect
+        );
 
         (function enemiesHandling(lgo, dm) {
             const enemyShoot = {
@@ -708,7 +756,7 @@ function loader() {
             });
         })(player, settings);
 
-        (function playerExternalHandler(pl, dm, st, lgo, stg, txtCmp, callbackNotificationWindow) {
+        (function playerExternalHandler(pl, dm, st, lgo, stg, txtCmp, eff, nw, au) {
             let winnerWindow = null;
             const notificationText = {
                 win: 'you are a winner',
@@ -716,6 +764,7 @@ function loader() {
             };
             pl.onCollide((other) => {
                 if (other.tags[0] === 'bonus') {
+                    au(eff.drops.take);
                     other.destroy();
                     ++dm.count.drops;
                     txtCmp.drops.text = `[base]${dm.count.drops}[/base]`;
@@ -728,8 +777,10 @@ function loader() {
                 if (dm.count.mushroom == st.game.limitComponent) {
                     dm.activate.watering = false;
                     dm.activate.win = true;
+                    music.stop();
+                    au(eff.game.win);
                     pl.destroy();
-                    winnerWindow = callbackNotificationWindow(
+                    winnerWindow = nw(
                         notificationText.win,
                         st.colors.panel,
                         st.colors.text,
@@ -767,9 +818,11 @@ function loader() {
 
             pl.onCollide((other) => {
                 if (other.tags[0] === 'enemy' || other.tags[0] === 'shootEnemy' || other.tags[0] === 'lightning') {
+                    au(eff.game.loser);
                     pl.destroy();
+                    music.stop();
                     dm.activate.loser = true;
-                    winnerWindow = callbackNotificationWindow(
+                    winnerWindow = nw(
                         notificationText.loser,
                         st.colors.panel,
                         st.colors.text,
@@ -782,9 +835,19 @@ function loader() {
                     });
                 }
             });
-        })(player, dataManger, settings, levelGO, stage, textCounterUI, notificationWindow);
+        })(
+            player,
+            dataManger,
+            settings,
+            levelGO,
+            stage,
+            textCounterUI,
+            settings.effects,
+            notificationWindow,
+            audioEffect
+        );
 
-        (function pauseHandler(dm, clr, sc, fs, callbackNotificationWindow) {
+        (function pauseHandler(dm, clr, sc, fs, eff, nw, au) {
             let pausedWindow = null;
             const pauseText = 'pause';
             k.onKeyPress('p', () => {
@@ -794,16 +857,29 @@ function loader() {
                     });
                     dm.activate.pause = !dm.activate.pause;
                     if (dm.activate.pause) {
-                        pausedWindow = callbackNotificationWindow(pauseText, clr.panel, clr.text, sc, fs, false);
+                        music.stop();
+                        au(eff.click);
+                        pausedWindow = nw(pauseText, clr.panel, clr.text, sc, fs, false);
                     } else {
+                        music.play();
+                        au(eff.click);
                         pausedWindow.destroy();
                     }
                 }
             });
-        })(dataManger, settings.colors, settings.scene, settings.font.size, notificationWindow);
+        })(
+            dataManger,
+            settings.colors,
+            settings.scene,
+            settings.font.size,
+            settings.effects.pause,
+            notificationWindow,
+            audioEffect
+        );
 
         k.onKeyPress('r', () => {
             if (!dataManger.activate.pause) {
+                audioEffect(settings.effects.game.restart);
                 k.get().forEach((item) => item.destroy());
                 dataManger = {
                     count: {
@@ -823,5 +899,5 @@ function loader() {
         });
     });
 
-    k.go('game', stage, settings, dataManger);
+    k.go('start');
 })(loader, settings);
