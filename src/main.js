@@ -297,6 +297,21 @@ function loader() {
         },
     };
 
+    const notificationWindow = function (txt, cbg, ct, ws, fs) {
+        const style = {
+            size: fs.xs * 3,
+            font: 'Silkscreen',
+            styles: {
+                base: {
+                    color: k.rgb(ct),
+                },
+            },
+        };
+        const window = k.add([k.rect(k.width(), k.height()), k.color(cbg), k.layer('ui')]);
+        window.add([k.text(`[base]${txt}[/base]`, style), k.anchor('center'), k.pos(ws.width / 2, ws.height / 2)]);
+        return window;
+    };
+
     k.layers(['room', 'ui'], 'room');
 
     k.scene('game', (stage, settings, dataManger) => {
@@ -544,54 +559,54 @@ function loader() {
                 }
             }
 
-            const enemyShootMove = function (startPosX, posY, endPosX, speed) {
-                k.wait(2, () => {
-                    enemyShoot.enemy
-                        .tween(
-                            k.vec2(startPosX, posY),
-                            k.vec2(endPosX, posY),
-                            speed,
-                            (val) => (enemyShoot.enemy.pos = val)
-                        )
-                        .then(() => {
-                            enemyShootMove(endPosX, enemyShoot.pos.y, startPosX, 2);
-                        });
-                });
-            };
-            enemyShootMove(enemyShoot.pos.x, enemyShoot.pos.y, enemyShoot.pos.x + 264, 2);
+            // const enemyShootMove = function (startPosX, posY, endPosX, speed) {
+            //     k.wait(2, () => {
+            //         enemyShoot.enemy
+            //             .tween(
+            //                 k.vec2(startPosX, posY),
+            //                 k.vec2(endPosX, posY),
+            //                 speed,
+            //                 (val) => (enemyShoot.enemy.pos = val)
+            //             )
+            //             .then(() => {
+            //                 enemyShootMove(endPosX, enemyShoot.pos.y, startPosX, 2);
+            //             });
+            //     });
+            // };
+            // enemyShootMove(enemyShoot.pos.x, enemyShoot.pos.y, enemyShoot.pos.x + 264, 2);
 
-            const enemyShootThrowingLightning = function () {
-                const directions = [
-                    { lightning: k.LEFT },
-                    { lightningDown: k.DOWN },
-                    { lightningUp: k.UP },
-                    { lightningRight: k.RIGHT },
-                ];
+            // const enemyShootThrowingLightning = function () {
+            //     const directions = [
+            //         { lightning: k.LEFT },
+            //         { lightningDown: k.DOWN },
+            //         { lightningUp: k.UP },
+            //         { lightningRight: k.RIGHT },
+            //     ];
 
-                const createLightning = function () {
-                    if (dm.activate.pause) {
-                        return false;
-                    }
-                    const speeds = [175, 255, 300];
-                    const currentLightning = directions[k.randi(directions.length)];
-                    const lightning = add([
-                        k.sprite(Object.keys(currentLightning)[0]),
-                        k.pos(enemyShoot.enemy.pos.x, enemyShoot.enemy.pos.y),
-                        k.area({ collisionIgnore: ['enemy', 'bonus'] }),
-                        k.body({ isStatic: true }),
-                        k.move(Object.values(currentLightning)[0], speeds[k.randi(speeds.length)]),
-                        k.offscreen({ destroy: true }),
-                        'lightning',
-                    ]);
-                };
+            //     const createLightning = function () {
+            //         if (dm.activate.pause) {
+            //             return false;
+            //         }
+            //         const speeds = [175, 255, 300];
+            //         const currentLightning = directions[k.randi(directions.length)];
+            //         const lightning = add([
+            //             k.sprite(Object.keys(currentLightning)[0]),
+            //             k.pos(enemyShoot.enemy.pos.x, enemyShoot.enemy.pos.y),
+            //             k.area({ collisionIgnore: ['enemy', 'bonus'] }),
+            //             k.body({ isStatic: true }),
+            //             k.move(Object.values(currentLightning)[0], speeds[k.randi(speeds.length)]),
+            //             k.offscreen({ destroy: true }),
+            //             'lightning',
+            //         ]);
+            //     };
 
-                k.wait(2, () => {
-                    k.loop(1, () => {
-                        createLightning();
-                    });
-                });
-            };
-            enemyShootThrowingLightning();
+            //     k.wait(2, () => {
+            //         k.loop(1, () => {
+            //             createLightning();
+            //         });
+            //     });
+            // };
+            // enemyShootThrowingLightning();
         })(levelGO, dataManger);
 
         const player = (function buildPlayer() {
@@ -713,50 +728,38 @@ function loader() {
             });
         })(player, dataManger, settings, levelGO, stage, textCounterUI);
 
-        (function pauseHandler(dm, clr, sc, fs) {
+        (function pauseHandler(dm, clr, sc, fs, callbackNotificationWindow) {
             let pausedWindow = null;
             const pauseText = 'pause';
-            const style = {
-                size: fs.xs * 3,
-                font: 'Silkscreen',
-                styles: {
-                    base: {
-                        color: k.rgb(clr.text),
-                    },
-                },
-            };
             k.onKeyPress('p', () => {
                 k.get().forEach((item) => {
                     item.paused = !dm.activate.pause;
                 });
                 dm.activate.pause = !dm.activate.pause;
                 if (dm.activate.pause) {
-                    pausedWindow = k.add([k.rect(k.width(), k.height()), k.color(clr.panel), k.layer('ui')]);
-                    pausedWindow.add([
-                        k.text(`[base]${pauseText}[/base]`, style),
-                        k.anchor('center'),
-                        k.pos(sc.width / 2, sc.height / 2),
-                    ]);
+                    pausedWindow = callbackNotificationWindow(pauseText, clr.panel, clr.text, sc, fs);
                 } else {
                     pausedWindow.destroy();
                 }
             });
-        })(dataManger, settings.colors, settings.scene, settings.font.size);
+        })(dataManger, settings.colors, settings.scene, settings.font.size, notificationWindow);
 
         k.onKeyPress('r', () => {
-            k.get().forEach((item) => item.destroy());
-            dataManger = {
-                count: {
-                    drops: 0,
-                    mushroom: 0,
-                    stage: 1,
-                },
-                activate: {
-                    watering: false,
-                    pause: false,
-                },
-            };
-            k.go('game', stage, settings, dataManger);
+            if (!dataManger.activate.pause) {
+                k.get().forEach((item) => item.destroy());
+                dataManger = {
+                    count: {
+                        drops: 0,
+                        mushroom: 0,
+                        stage: 1,
+                    },
+                    activate: {
+                        watering: false,
+                        pause: false,
+                    },
+                };
+                k.go('game', stage, settings, dataManger);
+            }
         });
     });
 
