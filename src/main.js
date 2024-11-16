@@ -10,6 +10,7 @@ const settings = {
         background: '#2A2F4E',
         panel: '#0E071B',
         text: '#0CF1FF',
+        blinking: '#FF5000',
     },
     tile: {
         width: 32,
@@ -515,11 +516,20 @@ function loader() {
             return levelObjects;
         })(stage, dataManger.count.stage, settings.tile);
 
-        (function mushroomsHandling(lgo, lim, tile, txtCmp, dm) {
+        (function mushroomsHandling(lgo, lim, tile, txtCmp, dm, bli) {
+            const blinking = function (mushroom, bli) {
+                mushroom.use('color');
+                mushroom.color = k.rgb(bli);
+                k.wait(0.2, () => {
+                    mushroom.color = k.rgb(255, 255, 255);
+                });
+            };
+
             for (const mushroom of lgo.organic) {
                 mushroom.onCollide((other) => {
                     if (other.tags[0] === 'drops') {
                         other.destroy();
+                        blinking(mushroom, bli);
                         ++mushroom.wateringCounter;
                         if (mushroom.wateringCounter === lim) {
                             const pos = { x: mushroom.pos.x, y: mushroom.pos.y };
@@ -541,7 +551,7 @@ function loader() {
                     }
                 });
             }
-        })(levelGO, settings.game.limitComponent, settings.tile, textCounterUI, dataManger);
+        })(levelGO, settings.game.limitComponent, settings.tile, textCounterUI, dataManger, settings.colors.blinking);
 
         (function enemiesHandling(lgo, dm) {
             const enemyShoot = {
@@ -603,7 +613,7 @@ function loader() {
                     const lightning = add([
                         k.sprite(Object.keys(currentLightning)[0]),
                         k.pos(enemyShoot.enemy.pos.x, enemyShoot.enemy.pos.y),
-                        k.area({ collisionIgnore: ['enemy', 'bonus'] }),
+                        k.area({ shape: new Rect(k.vec2(10, 10), 13, 16), collisionIgnore: ['enemy', 'bonus'] }),
                         k.body({ isStatic: true }),
                         k.move(Object.values(currentLightning)[0], speeds[k.randi(speeds.length)]),
                         k.offscreen({ destroy: true }),
