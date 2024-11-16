@@ -294,10 +294,12 @@ function loader() {
         activate: {
             watering: false,
             pause: false,
+            win: false,
         },
     };
 
-    const notificationWindow = function (txt, cbg, ct, ws, fs) {
+    const notificationWindow = function (txt, cbg, ct, ws, fs, res) {
+        const restartText = 'Press restart <R>';
         const style = {
             size: fs.xs * 3,
             font: 'Silkscreen',
@@ -309,6 +311,14 @@ function loader() {
         };
         const window = k.add([k.rect(k.width(), k.height()), k.color(cbg), k.layer('ui')]);
         window.add([k.text(`[base]${txt}[/base]`, style), k.anchor('center'), k.pos(ws.width / 2, ws.height / 2)]);
+        if (res) {
+            style['size'] = 25;
+            window.add([
+                k.text(`[base]${restartText}[/base]`, style),
+                k.anchor('center'),
+                k.pos(ws.width / 2, (ws.height + 100) / 2),
+            ]);
+        }
         return window;
     };
 
@@ -559,54 +569,54 @@ function loader() {
                 }
             }
 
-            // const enemyShootMove = function (startPosX, posY, endPosX, speed) {
-            //     k.wait(2, () => {
-            //         enemyShoot.enemy
-            //             .tween(
-            //                 k.vec2(startPosX, posY),
-            //                 k.vec2(endPosX, posY),
-            //                 speed,
-            //                 (val) => (enemyShoot.enemy.pos = val)
-            //             )
-            //             .then(() => {
-            //                 enemyShootMove(endPosX, enemyShoot.pos.y, startPosX, 2);
-            //             });
-            //     });
-            // };
-            // enemyShootMove(enemyShoot.pos.x, enemyShoot.pos.y, enemyShoot.pos.x + 264, 2);
+            const enemyShootMove = function (startPosX, posY, endPosX, speed) {
+                k.wait(2, () => {
+                    enemyShoot.enemy
+                        .tween(
+                            k.vec2(startPosX, posY),
+                            k.vec2(endPosX, posY),
+                            speed,
+                            (val) => (enemyShoot.enemy.pos = val)
+                        )
+                        .then(() => {
+                            enemyShootMove(endPosX, enemyShoot.pos.y, startPosX, 2);
+                        });
+                });
+            };
+            enemyShootMove(enemyShoot.pos.x, enemyShoot.pos.y, enemyShoot.pos.x + 264, 2);
 
-            // const enemyShootThrowingLightning = function () {
-            //     const directions = [
-            //         { lightning: k.LEFT },
-            //         { lightningDown: k.DOWN },
-            //         { lightningUp: k.UP },
-            //         { lightningRight: k.RIGHT },
-            //     ];
+            const enemyShootThrowingLightning = function () {
+                const directions = [
+                    { lightning: k.LEFT },
+                    { lightningDown: k.DOWN },
+                    { lightningUp: k.UP },
+                    { lightningRight: k.RIGHT },
+                ];
 
-            //     const createLightning = function () {
-            //         if (dm.activate.pause) {
-            //             return false;
-            //         }
-            //         const speeds = [175, 255, 300];
-            //         const currentLightning = directions[k.randi(directions.length)];
-            //         const lightning = add([
-            //             k.sprite(Object.keys(currentLightning)[0]),
-            //             k.pos(enemyShoot.enemy.pos.x, enemyShoot.enemy.pos.y),
-            //             k.area({ collisionIgnore: ['enemy', 'bonus'] }),
-            //             k.body({ isStatic: true }),
-            //             k.move(Object.values(currentLightning)[0], speeds[k.randi(speeds.length)]),
-            //             k.offscreen({ destroy: true }),
-            //             'lightning',
-            //         ]);
-            //     };
+                const createLightning = function () {
+                    if (dm.activate.pause) {
+                        return false;
+                    }
+                    const speeds = [175, 255, 300];
+                    const currentLightning = directions[k.randi(directions.length)];
+                    const lightning = add([
+                        k.sprite(Object.keys(currentLightning)[0]),
+                        k.pos(enemyShoot.enemy.pos.x, enemyShoot.enemy.pos.y),
+                        k.area({ collisionIgnore: ['enemy', 'bonus'] }),
+                        k.body({ isStatic: true }),
+                        k.move(Object.values(currentLightning)[0], speeds[k.randi(speeds.length)]),
+                        k.offscreen({ destroy: true }),
+                        'lightning',
+                    ]);
+                };
 
-            //     k.wait(2, () => {
-            //         k.loop(1, () => {
-            //             createLightning();
-            //         });
-            //     });
-            // };
-            // enemyShootThrowingLightning();
+                k.wait(2, () => {
+                    k.loop(1, () => {
+                        createLightning();
+                    });
+                });
+            };
+            enemyShootThrowingLightning();
         })(levelGO, dataManger);
 
         const player = (function buildPlayer() {
@@ -687,7 +697,11 @@ function loader() {
             });
         })(player, settings);
 
-        (function playerExternalHandler(pl, dm, st, lgo, stg, txtCmp) {
+        (function playerExternalHandler(pl, dm, st, lgo, stg, txtCmp, callbackNotificationWindow) {
+            let winnerWindow = null;
+            const notificationText = {
+                win: 'you are a winner',
+            };
             pl.onCollide((other) => {
                 if (other.tags[0] === 'bonus') {
                     other.destroy();
@@ -701,7 +715,18 @@ function loader() {
                 }
                 if (dm.count.mushroom == st.game.limitComponent) {
                     dm.activate.watering = false;
-                    console.log('YOU WIN! NEXT STAGE ...');
+                    dm.activate.win = true;
+                    winnerWindow = callbackNotificationWindow(
+                        notificationText.win,
+                        st.colors.panel,
+                        st.colors.text,
+                        st.scene,
+                        st.font.size.xs,
+                        true
+                    );
+                    k.get().forEach((item) => {
+                        item.paused = !dm.activate.pause;
+                    });
                 }
             });
 
@@ -726,20 +751,22 @@ function loader() {
                     }
                 }
             });
-        })(player, dataManger, settings, levelGO, stage, textCounterUI);
+        })(player, dataManger, settings, levelGO, stage, textCounterUI, notificationWindow);
 
         (function pauseHandler(dm, clr, sc, fs, callbackNotificationWindow) {
             let pausedWindow = null;
             const pauseText = 'pause';
             k.onKeyPress('p', () => {
-                k.get().forEach((item) => {
-                    item.paused = !dm.activate.pause;
-                });
-                dm.activate.pause = !dm.activate.pause;
-                if (dm.activate.pause) {
-                    pausedWindow = callbackNotificationWindow(pauseText, clr.panel, clr.text, sc, fs);
-                } else {
-                    pausedWindow.destroy();
+                if (!dm.activate.win) {
+                    k.get().forEach((item) => {
+                        item.paused = !dm.activate.pause;
+                    });
+                    dm.activate.pause = !dm.activate.pause;
+                    if (dm.activate.pause) {
+                        pausedWindow = callbackNotificationWindow(pauseText, clr.panel, clr.text, sc, fs, false);
+                    } else {
+                        pausedWindow.destroy();
+                    }
                 }
             });
         })(dataManger, settings.colors, settings.scene, settings.font.size, notificationWindow);
@@ -756,6 +783,7 @@ function loader() {
                     activate: {
                         watering: false,
                         pause: false,
+                        win: false,
                     },
                 };
                 k.go('game', stage, settings, dataManger);
