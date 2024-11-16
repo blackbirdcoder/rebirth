@@ -295,6 +295,7 @@ function loader() {
             watering: false,
             pause: false,
             win: false,
+            loser: false,
         },
     };
 
@@ -701,6 +702,7 @@ function loader() {
             let winnerWindow = null;
             const notificationText = {
                 win: 'you are a winner',
+                loser: 'you loser',
             };
             pl.onCollide((other) => {
                 if (other.tags[0] === 'bonus') {
@@ -716,6 +718,7 @@ function loader() {
                 if (dm.count.mushroom == st.game.limitComponent) {
                     dm.activate.watering = false;
                     dm.activate.win = true;
+                    pl.destroy();
                     winnerWindow = callbackNotificationWindow(
                         notificationText.win,
                         st.colors.panel,
@@ -751,13 +754,31 @@ function loader() {
                     }
                 }
             });
+
+            pl.onCollide((other) => {
+                if (other.tags[0] === 'enemy' || other.tags[0] === 'shootEnemy' || other.tags[0] === 'lightning') {
+                    pl.destroy();
+                    dm.activate.loser = true;
+                    winnerWindow = callbackNotificationWindow(
+                        notificationText.loser,
+                        st.colors.panel,
+                        st.colors.text,
+                        st.scene,
+                        st.font.size.xs,
+                        true
+                    );
+                    k.get().forEach((item) => {
+                        item.paused = !dm.activate.pause;
+                    });
+                }
+            });
         })(player, dataManger, settings, levelGO, stage, textCounterUI, notificationWindow);
 
         (function pauseHandler(dm, clr, sc, fs, callbackNotificationWindow) {
             let pausedWindow = null;
             const pauseText = 'pause';
             k.onKeyPress('p', () => {
-                if (!dm.activate.win) {
+                if (!dm.activate.win && !dm.activate.loser) {
                     k.get().forEach((item) => {
                         item.paused = !dm.activate.pause;
                     });
@@ -784,6 +805,7 @@ function loader() {
                         watering: false,
                         pause: false,
                         win: false,
+                        loser: false,
                     },
                 };
                 k.go('game', stage, settings, dataManger);
