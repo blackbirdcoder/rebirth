@@ -12,6 +12,7 @@ const settings = {
         panel: '#0E071B',
         text: '#0CF1FF',
         blinking: '#FF5000',
+        bright: '#99E65F',
     },
     tile: {
         width: 32,
@@ -277,6 +278,9 @@ function loader() {
         'lightningUp',
         'lightningRight',
         'drops',
+        'title',
+        'help',
+        'help2',
     ];
 
     for (const name of fileName) {
@@ -352,6 +356,57 @@ function loader() {
     k.layers(['room', 'ui'], 'room');
 
     k.scene('start', () => {
+        k.onDraw(() => {
+            k.drawSprite({
+                sprite: 'background',
+                pos: k.vec2(0, 0),
+                width: settings.scene.width,
+                height: settings.scene.height,
+            });
+            k.drawSprite({
+                sprite: 'title',
+                pos: k.vec2(50, 60),
+                width: 700,
+                height: 185,
+            });
+            k.drawSprite({
+                sprite: 'help',
+                pos: k.vec2(270, 350),
+                width: 253,
+                height: 253,
+                anchor: 'center',
+                scale: 1,
+            });
+            k.drawSprite({
+                sprite: 'help2',
+                pos: k.vec2(520, 350),
+                width: 253,
+                height: 253,
+                anchor: 'center',
+                scale: 1,
+            });
+        });
+        const hero = k.add([k.sprite('player', { anim: 'run' }), k.pos(125, 40), k.scale(1.5), k.timer()]);
+        const moveLoop = function (start, end) {
+            hero.tween(k.vec2(start, 40), k.vec2(end, 40), 3, (val) => {
+                hero.pos = val;
+            }).then(() => {
+                moveLoop(end, start);
+            });
+        };
+        moveLoop(124, 400);
+        const text = 'press <enter>';
+        const style = {
+            size: 40,
+            width: 480,
+            font: 'Silkscreen',
+            styles: {
+                base: {
+                    color: k.rgb(settings.colors.bright),
+                },
+            },
+        };
+        k.add([k.text(`[base]${text}[/base]`, style), k.pos(220, 480)]);
         k.onKeyPress('enter', () => {
             k.go('game', stage, settings, dataManger);
         });
