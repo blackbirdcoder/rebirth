@@ -254,10 +254,9 @@ const k = kaplay({
     width: settings.scene.width,
     height: settings.scene.height,
     background: settings.colors.background,
-    debugKey: 'd', // Temp option
 });
 
-k.debug.inspect = true; // DEBUG
+// k.debug.inspect = false; // DEBUG
 
 function loader() {
     const fileName = [
