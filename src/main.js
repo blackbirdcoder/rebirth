@@ -891,7 +891,7 @@ function loader() {
             });
 
             pl.onCollide((other) => {
-                if (other.tags[0] === 'enemy' || other.tags[0] === 'shootEnemy' || other.tags[0] === 'lightning') {
+                if (other.tags[0] === 'enemy' || other.tags[0] === 'enemyShoot' || other.tags[0] === 'lightning') {
                     au(eff.game.loser);
                     pl.destroy();
                     music.stop();
