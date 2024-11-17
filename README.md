@@ -1,27 +1,13 @@
-# Folder structure
+# Rebirth
 
-- `src` - source code for your kaplay project
-- `www` - distribution folder, contains your index.html, built js bundle and static assets
+This is a game I created in a short time specifically for the Kajam game jam to support the [kaplayjs](https://kaplayjs.com/) community. The development process was intense and fast-paced, so the code might be a bit rough edges.
 
+### See screenshot
 
-## Development
+![Rebirth](./screenshot/rebirth.png)
 
-```sh
-$ npm run dev
-```
+### How to Run Locally
 
-will start a dev server at http://localhost:8000
+Clone the repository, `run npm install`, then start the server with `npm run dev`. Open the local URL in your browser.
 
-## Distribution
-
-```sh
-$ npm run build
-```
-
-will build your js files into `www/main.js`
-
-```sh
-$ npm run bundle
-```
-
-will build your game and package into a .zip file, you can upload to your server or itch.io / newground etc.
+You can [play](https://blackbird-dev.itch.io/rebirth-jam)
