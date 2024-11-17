@@ -281,6 +281,7 @@ function loader() {
         'title',
         'help',
         'help2',
+        'sky',
     ];
 
     for (const name of fileName) {
@@ -481,6 +482,24 @@ function loader() {
                 });
             })(dataManger);
         });
+
+        (function decorations() {
+            const scales = [0.3, 0.5, 1];
+            const sky = k.add([k.sprite('sky'), k.pos(1000, 0), k.opacity(0.3), k.timer(), k.scale(1)]);
+            const moveSky = function () {
+                const y = k.randi(100, 501);
+                sky.tween(k.vec2(700, y), k.vec2(-300, y), k.randi(5, 11), (val) => {
+                    sky.pos = val;
+                }).then(() => {
+                    const size = scales[k.randi(scales.length)];
+                    sky.scale = k.vec2(size, size);
+                    moveSky();
+                });
+            };
+            k.wait(4, () => {
+                moveSky();
+            });
+        })();
 
         (function auxiliaryBarrierUI() {
             const barrier = k.add([
